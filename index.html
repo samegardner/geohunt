@@ -157,6 +157,13 @@
       </div>
     </div>
 
+    <details style="margin:0 0 6px">
+      <summary>Edit an existing hunt</summary>
+      <p class="hint">Paste a hunt's share link (the long <code>#play=…</code> link) to load it here and make changes.</p>
+      <input id="import-link" placeholder="https://…/geohunt/#play=…">
+      <button id="btn-import" class="btn-sm btn-ghost" style="margin-top:8px">Load hunt</button>
+    </details>
+
     <div class="panel">
       <label for="b-title">Hunt title</label>
       <input id="b-title" placeholder="e.g. Danny's 30th Birthday Hunt">
@@ -252,13 +259,13 @@ function demoHunt(){
     intro:"This is a sample hunt so you can see how it all works. Edit the title, clues, and coordinates, then tap “Copy share link” and send it to your player.",
     finish:"🎉 You did it! Happy 30th! 🥳 Your real reward goes here.",
     stops:[
-      {clue:"Where friends raise a glass to kick off the night — find the bar on the corner.", lat:40.7128, lng:-74.0060, radius:30, arrival:"🍺 Cheers! You found the bar. On to the next…"},
-      {clue:"Follow your nose to a slice of heaven 🍕.", lat:40.7138, lng:-74.0050, radius:30, arrival:"🍕 Mangia! One stop left…"},
-      {clue:"Where the boats come and go — head to the ferry.", lat:40.7008, lng:-74.0134, radius:40, arrival:"⛴️ You made it to the ferry!"}
+      {name:"The bar", clue:"Where friends raise a glass to kick off the night — find the bar on the corner.", lat:40.7128, lng:-74.0060, radius:30, arrival:"🍺 Cheers! You found the bar. On to the next…"},
+      {name:"The pizza place", clue:"Follow your nose to a slice of heaven 🍕.", lat:40.7138, lng:-74.0050, radius:30, arrival:"🍕 Mangia! One stop left…"},
+      {name:"The ferry", clue:"Where the boats come and go — head to the ferry.", lat:40.7008, lng:-74.0134, radius:40, arrival:"⛴️ You made it to the ferry!"}
     ]
   };
 }
-function blankStop(){ return {clue:"", lat:"", lng:"", radius:30, arrival:""}; }
+function blankStop(){ return {name:"", clue:"", lat:"", lng:"", radius:30, arrival:""}; }
 
 /* ============================ routing ============================ */
 function route(){
@@ -269,9 +276,15 @@ function route(){
     try { hunt = decodeHunt(payload); }
     catch(e){ renderBrokenLink(); return; }
     startPlayer(hunt, payload, params.get('test') === '1');
-  } else {
-    showBuilder();
+    return;
   }
+  const editPayload = params.get('edit');
+  if (editPayload){
+    try { loadHuntIntoDraft(decodeHunt(editPayload)); toast('Hunt loaded — edit away'); }
+    catch(e){ /* ignore a bad edit link, just open the builder */ }
+    history.replaceState(null, '', location.pathname);
+  }
+  showBuilder();
 }
 window.addEventListener('hashchange', route);
 
@@ -290,6 +303,18 @@ function saveDraft(){
   try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch(e){}
 }
 const saveDraftSoon = (()=>{ let t; return ()=>{ clearTimeout(t); t=setTimeout(saveDraft, 250); }; })();
+
+function loadHuntIntoDraft(h){
+  draft = {
+    v:1, title:h.title||"", intro:h.intro||"", finish:h.finish||"",
+    stops:(h.stops && h.stops.length ? h.stops : [blankStop()]).map(s => ({
+      name:s.name||"", clue:s.clue||"",
+      lat:(s.lat||s.lat===0)?String(s.lat):"", lng:(s.lng||s.lng===0)?String(s.lng):"",
+      radius:s.radius||30, arrival:s.arrival||""
+    }))
+  };
+  saveDraft();
+}
 
 function showBuilder(){
   $('#player').classList.add('hidden');
@@ -318,6 +343,8 @@ function renderStops(){
           <button class="btn-icon" data-act="del" title="Remove">✕</button>
         </span>
       </div>
+      <label>Spot name — private note, only you see this</label>
+      <input data-f="name" placeholder="e.g. Fifth Hammer Brewing" value="${escapeHtml(s.name)}">
       <label>Clue (sends them to this spot)</label>
       <textarea data-f="clue" placeholder="Write a riddle or directions…">${escapeHtml(s.clue)}</textarea>
       <div class="row">
@@ -410,7 +437,7 @@ function collectHunt(){
   const hunt = {
     v:1, title:draft.title, intro:draft.intro, finish:draft.finish,
     stops: draft.stops.map(s => ({
-      clue:s.clue, lat:parseFloat(s.lat), lng:parseFloat(s.lng),
+      name:s.name||"", clue:s.clue, lat:parseFloat(s.lat), lng:parseFloat(s.lng),
       radius:clampNum(parseInt(s.radius,10)||30,5,200), arrival:s.arrival
     }))
   };
@@ -449,6 +476,19 @@ function setupBuilderHandlers(){
     } catch(e){
       prompt('Copy this link and send it to your player:', url);
     }
+  });
+  $('#btn-import').addEventListener('click', () => {
+    const raw = $('#import-link').value.trim();
+    if (!raw){ toast('Paste a hunt link first'); return; }
+    const m = raw.match(/(?:play|edit)=([A-Za-z0-9_-]+)/);
+    const payload = m ? m[1] : raw;
+    try {
+      loadHuntIntoDraft(decodeHunt(payload));
+      $('#import-link').value = '';
+      showBuilder();
+      window.scrollTo({top:0, behavior:'smooth'});
+      toast('Hunt loaded — edit away');
+    } catch(e){ toast('That link could not be read'); }
   });
 }
 
