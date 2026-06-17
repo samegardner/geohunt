@@ -166,7 +166,7 @@
 
     <div class="panel">
       <label for="b-title">Hunt title</label>
-      <input id="b-title" placeholder="e.g. Danny's 30th Birthday Hunt">
+      <input id="b-title" placeholder="e.g. Birthday Treasure Hunt">
       <label for="b-intro">Welcome message (shown on the start screen)</label>
       <textarea id="b-intro" placeholder="Happy birthday! Follow each clue to the next spot…"></textarea>
     </div>
@@ -183,7 +183,8 @@
 
     <div class="actions">
       <button id="btn-preview" class="btn-ghost">▶ Preview &amp; test (no walking required)</button>
-      <button id="btn-copy" class="btn-gold btn-block">🔗 Copy share link</button>
+      <button id="btn-short" class="btn-gold btn-block">🔗 Copy short link</button>
+      <button id="btn-copy" class="btn-ghost">Copy full link (works offline)</button>
       <button id="btn-reset" class="btn-sm btn-ghost" style="align-self:center;border:none">Start over with a blank hunt</button>
     </div>
 
@@ -489,6 +490,24 @@ function setupBuilderHandlers(){
       window.scrollTo({top:0, behavior:'smooth'});
       toast('Hunt loaded — edit away');
     } catch(e){ toast('That link could not be read'); }
+  });
+  $('#btn-short').addEventListener('click', async () => {
+    const {hunt, errs} = collectHunt();
+    if (errs.length){ alert('Fix these first:\n\n• ' + errs.join('\n• ')); return; }
+    const longUrl = location.origin + location.pathname + '#play=' + encodeHunt(hunt);
+    const btn = $('#btn-short'), label = btn.textContent;
+    btn.textContent = 'Shortening…'; btn.disabled = true;
+    try {
+      const res = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(longUrl));
+      const short = (await res.text()).trim();
+      if (!res.ok || !/^https?:\/\//.test(short)) throw new Error('shortener failed');
+      try { await navigator.clipboard.writeText(short); toast('🔗 Short link copied!'); }
+      catch(e){ prompt('Copy this short link and send it:', short); }
+    } catch(e){
+      prompt('Could not reach the shortener. Here is the full link instead (it still works):', longUrl);
+    } finally {
+      btn.textContent = label; btn.disabled = false;
+    }
   });
 }
 

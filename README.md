@@ -16,7 +16,10 @@ A GPS scavenger hunt you build in a browser and share with one link. The player 
    - Or, if you're standing at the spot on your phone, tap **Fill from my current location**.
 4. Set the **arrival radius** (how close counts as "arrived"). Default is 30 m (~33 yards).
 5. Optionally add a short "you made it!" message for each stop and a finish/reward message.
-6. Tap **Preview & test** to walk through it from your couch (no GPS needed), or **Copy share link** to send it.
+6. Tap **Preview & test** to walk through it from your couch (no GPS needed).
+7. When it's ready, tap **Copy short link** for a tiny link to send (it uses TinyURL). Prefer no shortener? **Copy full link** gives the long, fully self-contained version.
+
+To revise a hunt later, open the builder and use **Edit an existing hunt** to paste its link back in, or open an `#edit=` link directly.
 
 ## Playing
 Open the share link on a phone, tap **Start**, and allow location when asked. The screen shows how far you are from the next spot (in yards) and a hot/cold indicator. Get within the radius and the next clue unlocks automatically. An **I'm here** button is always there as a manual override if GPS is being stubborn. Close the tab and reopen the same link and you'll pick up right where you left off.
