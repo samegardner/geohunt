@@ -311,7 +311,7 @@ function loadHuntIntoDraft(h){
     stops:(h.stops && h.stops.length ? h.stops : [blankStop()]).map(s => ({
       name:s.name||"", clue:s.clue||"",
       lat:(s.lat||s.lat===0)?String(s.lat):"", lng:(s.lng||s.lng===0)?String(s.lng):"",
-      radius:s.radius||30, arrival:s.arrival||""
+      radius:clampNum(parseInt(s.radius,10)||30,5,200), arrival:s.arrival||""
     }))
   };
   saveDraft();
@@ -349,8 +349,8 @@ function renderStops(){
       <label>Clue (sends them to this spot)</label>
       <textarea data-f="clue" placeholder="Write a riddle or directions…">${escapeHtml(s.clue)}</textarea>
       <div class="row">
-        <div><label>Latitude</label><input data-f="lat" inputmode="decimal" placeholder="40.7128" value="${s.lat}"></div>
-        <div><label>Longitude</label><input data-f="lng" inputmode="decimal" placeholder="-74.0060" value="${s.lng}"></div>
+        <div><label>Latitude</label><input data-f="lat" inputmode="decimal" placeholder="40.7128" value="${escapeHtml(s.lat)}"></div>
+        <div><label>Longitude</label><input data-f="lng" inputmode="decimal" placeholder="-74.0060" value="${escapeHtml(s.lng)}"></div>
       </div>
       <button class="btn-sm btn-ghost" data-act="here" style="margin-top:8px">📍 Fill from my current location</button>
       <label>Arrival radius — how close to count as “arrived”</label>
@@ -588,7 +588,7 @@ function renderResume(){
 
 function beginStop(){
   renderClue();
-  enableLocation();
+  if (!player.test) enableLocation();
   requestWakeLock();
 }
 
@@ -603,12 +603,12 @@ function renderClue(){
       <div class="clue-box">${escapeHtml(s.clue)}</div>
       <div id="geo-status"></div>
       <div class="dist" id="dist-val">—</div>
-      <div class="accuracy" id="acc-val">Finding your location…</div>
+      <div class="accuracy" id="acc-val">${player.test ? 'Test mode — use the buttons to advance' : 'Finding your location…'}</div>
       <div class="heat"><div class="needle" id="needle" style="left:0%"></div></div>
       <div class="heat-label" id="heat-label">&nbsp;</div>
       <div class="progress-dots">${dots}</div>
       <button id="p-here" class="btn-ghost btn-block">I'm here — unlock the next clue</button>
-      <p class="hint" style="text-align:center">Within ${yd(s.radius)} yards counts as arrived. Tap “I'm here” if GPS is being stubborn.</p>
+      <p class="hint" style="text-align:center">${player.test ? 'Test mode — tap the button below to move to the next clue.' : `Within ${yd(s.radius)} yards counts as arrived. Tap “I'm here” if GPS is being stubborn.`}</p>
     </div>`;
   bindTestBar();
   $('#p-here').addEventListener('click', () => arrive(false));
@@ -686,6 +686,7 @@ function updateDistanceUI(){
 
 function checkAutoArrival(){
   if (!lastPos || !player) return;
+  if (!document.getElementById('p-here')) return; // only auto-arrive while a clue screen is showing
   const s = player.hunt.stops[player.idx];
   const d = distanceM(lastPos, {lat:s.lat, lng:s.lng});
   if (d <= s.radius) arrive(false);
