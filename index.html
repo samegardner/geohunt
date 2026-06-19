@@ -675,11 +675,11 @@ function updateDistanceUI(){
   if (needle) needle.style.left = pct + '%';
   if (label){
     let txt;
-    if (d <= s.radius) txt = '🔥 You\'re here!';
-    else if (d <= s.radius*2) txt = '🔥 Boiling hot';
-    else if (d <= s.radius*4) txt = '☀️ Warm';
-    else if (d <= s.radius*8) txt = '🧭 Getting closer';
-    else txt = '❄️ Cold — keep going';
+    if (d <= s.radius) txt = 'You\'re here!';
+    else if (d <= s.radius*2) txt = 'Boiling hot';
+    else if (d <= s.radius*4) txt = 'Warm';
+    else if (d <= s.radius*8) txt = 'Getting closer';
+    else txt = 'Cold, keep going';
     label.textContent = txt;
   }
 }
