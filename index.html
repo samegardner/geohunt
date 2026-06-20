@@ -404,6 +404,16 @@ function escapeHtml(s){
   return String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
 
+/* Clues display without emoji so they can't hint at the answer; arrival/finish text keeps them */
+function stripEmoji(s){
+  return String(s==null?'':s)
+    .replace(/[\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\u{FE0F}\u{200D}\u{20E3}]/gu, '')
+    .replace(/\p{Extended_Pictographic}/gu, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/[ \t]+$/gm, '')
+    .trim();
+}
+
 function fillCurrentLocation(i, card){
   if (!navigator.geolocation){ toast('This device has no GPS'); return; }
   toast('Getting your location…');
@@ -600,7 +610,7 @@ function renderClue(){
     ${testBar()}
     <div class="screen" style="justify-content:flex-start;padding-top:6px">
       <div class="scroll-pill">CLUE ${player.idx+1} OF ${h.stops.length}</div>
-      <div class="clue-box">${escapeHtml(s.clue)}</div>
+      <div class="clue-box">${escapeHtml(stripEmoji(s.clue))}</div>
       <div id="geo-status"></div>
       <div class="dist" id="dist-val">—</div>
       <div class="accuracy" id="acc-val">${player.test ? 'Test mode — use the buttons to advance' : 'Finding your location…'}</div>
